@@ -1,23 +1,24 @@
 #include "os.h"
+#include <stdint.h>
 #include "common.h"
 
-void proc_list_init(task_queue_t * list) {
+void queue_init(task_queue_t * list) {
     list->head = list->tail = NULL;
     list->len = 0;
 }
 
-void proc_list_append(task_queue_t * list, PD * proc) {
+void enqueue(task_queue_t * list, PD * task) {
     if (list->len == 0) {
-        list->head = list->tail = proc;
+        list->head = list->tail = task;
     } else {
-        list->tail->next = proc;
+        list->tail->next = task;
     }
-    list->tail = proc;
-    proc->next = NULL;
+    list->tail = task;
+    task->next = NULL;
     list->len++;
 }
 
-PD * proc_list_pop(task_queue_t * list) {
+PD * deque(task_queue_t * list) {
     if (list->len == 0) {
         return NULL;
     } else if (list->len == 1) {

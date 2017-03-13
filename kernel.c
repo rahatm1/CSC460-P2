@@ -35,6 +35,7 @@
   *===========
   */
 
+#define DEBUG 0
 /* Prototype */
 void Task_Terminate(void);
 void setupTimer(void);
@@ -82,8 +83,21 @@ volatile static unsigned int Tasks;
  * can just restore its execution context on its stack.
  * (See file "cswitch.S" for details.)
  */
-void Kernel_Create_Task_At( PD *p, voidfuncptr f ) 
-{   
+PD * Kernel_Create_Task( voidfuncptr f )
+{
+
+   int x;
+
+   if (Tasks == MAXTHREAD) return NULL;  /* Too many task! */
+
+   /* find a DEAD PD that we can use  */
+   for (x = 0; x < MAXTHREAD; x++) {
+       if (Process[x].state == DEAD) break;
+   }
+   Tasks++;
+
+   PD *p = &(Process[x]);
+
    unsigned char *sp;
 
 #ifdef DEBUG
@@ -135,29 +149,8 @@ void Kernel_Create_Task_At( PD *p, voidfuncptr f )
    /*----END of NEW CODE----*/
 
    p->state = READY;
-
+   return p;
 }
-
-
-/**
-  *  Create a new task
-  */
-static void Kernel_Create_Task( voidfuncptr f ) 
-{
-   int x;
-
-   if (Tasks == MAXTHREAD) return;  /* Too many task! */
-
-   /* find a DEAD PD that we can use  */
-   for (x = 0; x < MAXTHREAD; x++) {
-       if (Process[x].state == DEAD) break;
-   }
-
-   ++Tasks;
-   Kernel_Create_Task_At( &(Process[x]), f );
-
-}
-
 
 /**
   * This internal kernel function is a part of the "scheduler". It chooses the 
@@ -247,6 +240,7 @@ void OS_Init()
       memset(&(Process[x]),0,sizeof(PD));
       Process[x].state = DEAD;
    }
+  queue_init(&system_tasks);
 }
 
 
@@ -271,6 +265,13 @@ void OS_Abort(unsigned int error) {
 	//TODO: blink lights to indicate errors
 	Disable_Interrupt();
 	for(;;) {}
+}
+
+PID Task_Create_System(voidfuncptr f, int arg) {
+    PD * p = Kernel_Create_Task(f);
+    p->arg = arg;
+    enqueue(&system_tasks, p);
+    return p->pid;
 }
 
 

@@ -33,6 +33,13 @@ extern void Enter_Kernel();
 #define Disable_Interrupt()		asm volatile ("cli"::)
 #define Enable_Interrupt()		asm volatile ("sei"::)
 
+typedef enum priority_levels
+{
+	SYSTEM = 0,
+	PERIODIC,
+	RR
+} PRIORITY_LEVELS;
+
 /**
   *  This is the set of states that a task can be in at any given time.
   */
@@ -79,9 +86,9 @@ typedef struct ProcessDescriptor
 	uint8_t ticks_remaining;
 	// The next tick number when to run
 	uint32_t next_start;
-	// The period of the process (in ticks) (only used for PERIODIC procs)
+	// The period of the process (in ticks) (only used for PERIODIC task)
 	uint32_t period;
-	// The worst case execution time of the process (in ticks) (only used for PERIODIC procs)
+	// The worst case execution time of the process (in ticks) (only used for PERIODIC task)
 	uint32_t wcet;
 	// A pointer to the next item in the linked list (or NULL if none)
 	struct ProcessDescriptor* next;
@@ -89,12 +96,16 @@ typedef struct ProcessDescriptor
 	KERNEL_REQUEST_TYPE request;
 } PD;
 
-typedef struct {
+typedef struct task_queue_type {
     uint8_t len;
     PD * head;
     PD * tail;
 } task_queue_t;
 
-task_queue_t system_procs;
-task_queue_t periodic_procs;
-task_queue_t rr_procs;
+task_queue_t system_tasks;
+task_queue_t periodic_tasks;
+task_queue_t rr_tasks;
+
+extern void queue_init(task_queue_t * list);
+extern void enqueue(task_queue_t * list, PD * task);
+extern PD * deque(task_queue_t * list);
