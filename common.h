@@ -106,6 +106,6 @@ task_queue_t system_tasks;
 task_queue_t periodic_tasks;
 task_queue_t rr_tasks;
 
-extern void queue_init(task_queue_t * list);
-extern void enqueue(task_queue_t * list, PD * task);
-extern PD * deque(task_queue_t * list);
+void queue_init(task_queue_t * list);
+void enqueue(task_queue_t * list, PD * task);
+PD * deque(task_queue_t * list);

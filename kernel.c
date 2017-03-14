@@ -83,7 +83,7 @@ volatile static unsigned int Tasks;
  * can just restore its execution context on its stack.
  * (See file "cswitch.S" for details.)
  */
-PD * Kernel_Create_Task( voidfuncptr f )
+PD * Kernel_Create_Task( voidfuncptr f, int type )
 {
 
    int x;
@@ -145,6 +145,7 @@ PD * Kernel_Create_Task( voidfuncptr f )
    p->sp = sp;		/* stack pointer into the "workSpace" */
    p->code = f;		/* function to be executed as a task */
    p->request = NONE;
+   p->type = type;
 
    /*----END of NEW CODE----*/
 
@@ -198,7 +199,7 @@ static void Next_Kernel_Request()
 
        switch(Cp->request){
        case CREATE:
-           Kernel_Create_Task( Cp->code );
+           Kernel_Create_Task( Cp->code, RR);
            break;
        case NEXT:
 	   case NONE:
@@ -268,36 +269,22 @@ void OS_Abort(unsigned int error) {
 }
 
 PID Task_Create_System(voidfuncptr f, int arg) {
-    PD * p = Kernel_Create_Task(f);
+    PD * p = Kernel_Create_Task(f, SYSTEM);
     p->arg = arg;
     enqueue(&system_tasks, p);
     return p->pid;
 }
 
-PID   Task_Create_Period(void (*f)(void), int arg, TICK period, TICK wcet, TICK offset){
-	
+PID Task_Create_Period(voidfuncptr f, int arg, TICK period, TICK wcet, TICK offset){
+
 }
 
-
-/**
-  * For this example, we only support cooperatively multitasking, i.e.,
-  * each task gives up its share of the processor voluntarily by calling
-  * Task_Next().
-  */
-void Task_Create( voidfuncptr f)
-{
-   if (KernelActive ) {
-     Disable_Interrupt();
-     Cp->request = CREATE;
-     Cp->code = f;
-     Enter_Kernel();
-   } else { 
-      /* call the RTOS function directly */
-      Kernel_Create_Task( f );
-   }
+PID Task_Create_RR(voidfuncptr f, int arg) {
+    PD * p = Kernel_Create_Task(f, RR);
+    p->arg = arg;
+    enqueue(&rr_tasks, p);
+	return p->pid;
 }
-
-
 
 /**
   * The calling task gives up its share of the processor voluntarily.
@@ -336,7 +323,7 @@ void setupTimer() {
   //Set prescaller to 256
   TCCR3B |= (1<<CS32);
 
-  //Set TOP value (0.1 seconds)
+  //Set TOP value (0.01 seconds)
   OCR3A = 625;
 
   //Enable interupt A for timer 3.
