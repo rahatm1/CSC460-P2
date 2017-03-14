@@ -274,6 +274,10 @@ PID Task_Create_System(voidfuncptr f, int arg) {
     return p->pid;
 }
 
+PID   Task_Create_Period(void (*f)(void), int arg, TICK period, TICK wcet, TICK offset){
+	
+}
+
 
 /**
   * For this example, we only support cooperatively multitasking, i.e.,
@@ -292,6 +296,8 @@ void Task_Create( voidfuncptr f)
       Kernel_Create_Task( f );
    }
 }
+
+
 
 /**
   * The calling task gives up its share of the processor voluntarily.
