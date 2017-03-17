@@ -34,7 +34,7 @@ extern void a_main();
   *===========
   */
 
-// #define DEBUG 1
+#define DEBUG 1
 /* Prototype */
 void Task_Terminate(void);
 void setupTimer(void);
@@ -44,9 +44,7 @@ void setupTimer(void);
   * state a task is in.
   */
 static PD Process[MAXTHREAD];
-task_queue_t system_tasks;
-task_queue_t periodic_tasks;
-task_queue_t rr_tasks;
+static channel channels[MAXCHAN];
 
 /**
   * The process descriptor of the currently RUNNING task.
@@ -74,6 +72,8 @@ volatile unsigned char *CurrentSp;
 volatile static unsigned int Tasks;
 
 volatile uint64_t num_ticks = 0;
+uint8_t chan_num = 0;
+
 BOOL KernelActive = FALSE;
 
 /**
@@ -148,14 +148,17 @@ static void Dispatch()
      /* find the next READY task
        * Note: if there is no READY task, then this will loop forever!.
        */
-#ifdef DEBUG
-        UART_print("Dispatch\n");
-        UART_print("periodic_tasks len%d\n", periodic_tasks.len);
-        UART_print("num_ticks %d\n", num_ticks);
-#endif
+/* #ifdef DEBUG */
+/*         UART_print("Dispatch\n"); */
+/*         UART_print("num_ticks %d\n", num_ticks); */
+/* #endif */
 
-	if (Cp->state != RUNNING) {
+//TODO: Handle BLOCKED better
+	if (Cp->state != RUNNING ) {
 		if (system_tasks.head) {
+			while (peek(&system_tasks)->state == BLOCKED) {
+               enqueue(&system_tasks, deque(&system_tasks));
+			}
 			Cp = peek(&system_tasks);
         } else if (periodic_tasks.len > 0 && num_ticks >= peek(&periodic_tasks)->next_start) {
     		PD* p = peek(&periodic_tasks);
@@ -168,6 +171,9 @@ static void Dispatch()
 #endif
     		Cp = p;
 		} else if (rr_tasks.head) {
+			while (peek(&rr_tasks)->state == BLOCKED) {
+               enqueue(&rr_tasks, deque(&rr_tasks));
+			}
 			Cp = peek(&rr_tasks);
 		}
 	}
@@ -193,9 +199,9 @@ void Next_Kernel_Request() {
         /* save the Cp's stack pointer */
        Cp->sp = CurrentSp;
 
-#ifdef DEBUG
-			UART_print("Req: %d\n", Cp->request);
-#endif
+/* #ifdef DEBUG */
+/* 			UART_print("Req: %d\n", Cp->request); */
+/* #endif */
        switch(Cp->request){
        case NEXT:
        switch (Cp->type) {
@@ -217,7 +223,7 @@ void Next_Kernel_Request() {
                enqueue(&rr_tasks, deque(&rr_tasks));
                break;
        }
-		Cp->state = READY;
+	    if (Cp->state != BLOCKED) Cp->state = READY;
 		Dispatch();
         break;
 
@@ -240,13 +246,13 @@ void Next_Kernel_Request() {
 				}
 				break;
 		}
-        Cp->state = READY;
+	    if (Cp->state != BLOCKED) Cp->state = READY;
         Dispatch();
         break;
 
        case NONE:
          /* NONE could be caused by a timer interrupt */
-          Cp->state = READY;
+	      if (Cp->state != BLOCKED) Cp->state = READY;
           Dispatch();
           break;
 
@@ -292,6 +298,9 @@ void OS_Init()
       memset(&(Process[x]),0,sizeof(PD));
       Process[x].state = DEAD;
    }
+   for (x = 0; x < MAXCHAN; x++) {
+      memset(&(channels[x]),0,sizeof(channel));
+   }
   queue_init(&system_tasks);
   queue_init(&periodic_tasks);
   queue_init(&rr_tasks);
@@ -317,9 +326,43 @@ void OS_Abort(unsigned int error) {
 	Disable_Interrupt();
 
 #ifdef DEBUG
-    UART_print("OS Aborted: %d", error);
+    UART_print("\nOS Aborted: %d\n", error);
 #endif
 	for(;;) {}
+}
+
+CHAN Chan_Init() {
+    if (chan_num == MAXCHAN) return (CHAN) NULL;
+    return ++chan_num;
+}
+
+void Send( CHAN ch, int v ) {
+    if (channels[ch].sender != NULL) {
+        OS_Abort(-5);
+    }
+
+	Cp->message = v;
+    channels[ch].sender = (PD *) Cp;
+
+    if (channels[ch].receiver == NULL) {
+        Disable_Interrupt();
+        Cp->state = BLOCKED;
+        Cp->request = NEXT;
+        Enter_Kernel();
+    }
+    channels[ch].receiver->state = READY;
+}
+
+int Recv( CHAN ch ) {
+    if (channels[ch].sender == NULL) {
+        Disable_Interrupt();
+        Cp->state = BLOCKED;
+        Cp->request = NEXT;
+        channels[ch].receiver = (PD*) Cp;
+        Enter_Kernel();
+    }
+    channels[ch].sender->state = READY;
+	return channels[ch].sender->message;
 }
 
 PID Task_Create_System(voidfuncptr f, int arg) {
@@ -424,7 +467,6 @@ void main()
 #endif
 
    OS_Init();
-   //TODO: Manually create a_main as a system task
    Task_Create_System(a_main, 0);
    OS_Start();
 }

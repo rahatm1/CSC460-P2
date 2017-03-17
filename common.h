@@ -47,7 +47,8 @@ typedef enum process_states
 {
    DEAD = 0,
    READY,
-   RUNNING
+   RUNNING,
+   BLOCKED
 } PROCESS_STATES;
 
 /**
@@ -94,8 +95,16 @@ typedef struct ProcessDescriptor
 	// A pointer to the next item in the linked list (or NULL if none)
 	struct ProcessDescriptor* next;
 
+    volatile int message;
+
 	KERNEL_REQUEST_TYPE request;
 } PD;
+
+typedef struct channel_t {
+    PD* sender;
+    PD* receiver;
+    volatile int message;
+} channel;
 
 typedef struct task_queue_type {
     uint8_t len;
