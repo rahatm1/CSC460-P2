@@ -34,7 +34,7 @@ extern void a_main();
   *===========
   */
 
-#define DEBUG 1
+// #define DEBUG 1
 /* Prototype */
 void Task_Terminate(void);
 void setupTimer(void);
@@ -72,6 +72,8 @@ volatile unsigned char *CurrentSp;
 
 /** number of tasks created so far */
 volatile static unsigned int Tasks;
+
+volatile uint64_t num_ticks = 0;
 BOOL KernelActive = FALSE;
 
 /**
@@ -129,6 +131,7 @@ PD * Kernel_Create_Task( voidfuncptr f, PRIORITY_LEVELS type )
    p->request = NONE;
    p->type = type;
    p->pid = x;
+   p->ticks_remaining = 0;
 
    /*----END of NEW CODE----*/
 
@@ -145,21 +148,29 @@ static void Dispatch()
      /* find the next READY task
        * Note: if there is no READY task, then this will loop forever!.
        */
+#ifdef DEBUG
+        UART_print("Dispatch\n");
+        UART_print("periodic_tasks len%d\n", periodic_tasks.len);
+        UART_print("num_ticks %d\n", num_ticks);
+#endif
+
 	if (Cp->state != RUNNING) {
 		if (system_tasks.head) {
 			Cp = peek(&system_tasks);
-			//TODO: Periodic
+        } else if (periodic_tasks.len > 0 && num_ticks >= peek(&periodic_tasks)->next_start) {
+    		PD* p = peek(&periodic_tasks);
+    		// Check for overlap with another periodic task
+    		if (p->next != NULL && num_ticks >= p->next->next_start) {
+    			OS_Abort(-2);
+    		}
+#ifdef DEBUG
+        UART_print("periodic task dispatch\n");
+#endif
+    		Cp = p;
 		} else if (rr_tasks.head) {
 			Cp = peek(&rr_tasks);
 		}
 	}
-#ifdef DEBUG
-			UART_print("CP %p\n", Cp);
-			UART_print("type %d\n", Cp->type);
-			UART_print("Tasks %d\n", Tasks);
-			UART_print("system_tasks len%d\n", system_tasks.len);
-			UART_print("rr tasks len%d\n", rr_tasks.len);
-#endif
 
     CurrentSp = Cp->sp;
 	Cp->state = RUNNING;
@@ -167,7 +178,7 @@ static void Dispatch()
 
 void Next_Kernel_Request() {
 
-	Dispatch();
+    Dispatch();
 
    while(1) {
        Cp->request = NONE; /* clear its request */
@@ -183,12 +194,9 @@ void Next_Kernel_Request() {
        Cp->sp = CurrentSp;
 
 #ifdef DEBUG
-			UART_print("Req: %d", Cp->request);
+			UART_print("Req: %d\n", Cp->request);
 #endif
        switch(Cp->request){
-       case CREATE:
-       //TODO
-           break;
        case NEXT:
        switch (Cp->type) {
            Cp->state = READY;
@@ -196,18 +204,52 @@ void Next_Kernel_Request() {
                enqueue(&system_tasks, deque(&system_tasks));
                break;
            case PERIODIC:
-           //TODO
-            //    deque(&periodic_tasks);
+				deque(&periodic_tasks);
+				Cp->next_start = Cp->next_start + Cp->period;
+				Cp->ticks_remaining = Cp->wcet;
+				task_list_insert_into_offset_order(&periodic_tasks, (PD *) Cp);
+                #ifdef DEBUG
+                        UART_print("periodic kernel len %d\n", periodic_tasks.len);
+                #endif
                break;
            case RR:
+			   Cp->ticks_remaining = 1;
                enqueue(&rr_tasks, deque(&rr_tasks));
                break;
        }
+		Cp->state = READY;
+		Dispatch();
+        break;
+
+       case TIMER:
+		switch (Cp->type) {
+			case SYSTEM: // drop down
+				break;
+			case PERIODIC: // drop down
+				Cp->ticks_remaining--;
+				if (Cp->ticks_remaining <= 0) {
+					OS_Abort(-1);
+				}
+				break;
+			case RR:
+				Cp->ticks_remaining--;
+				if (Cp->ticks_remaining <= 0) {
+					// Reset ticks and move to back
+					Cp->ticks_remaining = 1;
+					enqueue(&rr_tasks, deque(&rr_tasks));
+				}
+				break;
+		}
+        Cp->state = READY;
+        Dispatch();
+        break;
+
        case NONE:
          /* NONE could be caused by a timer interrupt */
           Cp->state = READY;
           Dispatch();
           break;
+
        case TERMINATE:
           /* deallocate all resources used by this task */
 		switch (Cp->type) {
@@ -223,10 +265,12 @@ void Next_Kernel_Request() {
 		}
 #ifdef DEBUG
 			UART_print("killed task\n");
+			UART_print("type: %d\n", Cp->type);
 #endif
 		  Cp->state = DEAD;
           Dispatch();
           break;
+
        default:
           /* Houston! we have a problem here! */
           break;
@@ -256,13 +300,14 @@ void OS_Init()
 void OS_Start()
 {
    if ( (! KernelActive) && (Tasks > 0)) {
-      Disable_Interrupt();
       /* we may have to initialize the interrupt vector for Enter_Kernel() here. */
 
       /* here we go...  */
       KernelActive = TRUE;
-      /* setupTimer(); */
-      Next_Kernel_Request();
+      setupTimer();
+      for (;;) {
+          Next_Kernel_Request();
+      }
       /* NEVER RETURNS!!! */
    }
 }
@@ -270,20 +315,11 @@ void OS_Start()
 void OS_Abort(unsigned int error) {
 	//TODO: blink lights to indicate errors
 	Disable_Interrupt();
-	for(;;) {}
-}
 
-void Task_Create( voidfuncptr f)
-{
-   if (KernelActive ) {
-     Disable_Interrupt();
-     Cp->request = CREATE;
-     Cp->code = f;
-     Enter_Kernel();
-   } else {
-      /* call the RTOS function directly */
-      /* Kernel_Create_Task( f ); */
-   }
+#ifdef DEBUG
+    UART_print("OS Aborted: %d", error);
+#endif
+	for(;;) {}
 }
 
 PID Task_Create_System(voidfuncptr f, int arg) {
@@ -294,8 +330,17 @@ PID Task_Create_System(voidfuncptr f, int arg) {
 }
 
 PID Task_Create_Period(voidfuncptr f, int arg, TICK period, TICK wcet, TICK offset){
-	//TODO
-	return -1;
+    PD * p = Kernel_Create_Task(f, PERIODIC);
+    p->arg = arg;
+
+    p->period = period;
+    p->wcet = wcet;
+    p->next_start = num_ticks + offset;
+    p->ticks_remaining = wcet;
+
+    task_list_insert_into_offset_order(&periodic_tasks, p);
+
+    return p->pid;
 }
 
 PID Task_Create_RR(voidfuncptr f, int arg) {
@@ -310,12 +355,10 @@ PID Task_Create_RR(voidfuncptr f, int arg) {
   */
 void Task_Next()
 {
-   if (KernelActive) {
      Disable_Interrupt();
 	 Cp->state = READY;
      Cp->request = NEXT;
      Enter_Kernel();
-  }
 }
 
 /**
@@ -323,7 +366,7 @@ void Task_Next()
   */
 void Task_Terminate()
 {
-	/* Disable_Interrupt(); */
+	Disable_Interrupt();
 	Cp->request = TERMINATE;
 #ifdef DEBUG
 			UART_print("killed task\n");
@@ -362,9 +405,9 @@ void setupTimer() {
 
 ISR(TIMER3_COMPA_vect)
 {
-	//TODO
-  /* Cp->request = NEXT; */
-  /* Enter_Kernel(); */
+  num_ticks++;
+  Cp->request = TIMER;
+  Enter_Kernel();
 }
 
 

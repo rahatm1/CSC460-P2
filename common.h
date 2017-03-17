@@ -58,7 +58,8 @@ typedef enum kernel_request_type
    NONE = 0,
    CREATE,
    NEXT,
-   TERMINATE
+   TERMINATE,
+   TIMER
 } KERNEL_REQUEST_TYPE;
 
 /**
@@ -69,7 +70,7 @@ typedef enum kernel_request_type
 typedef struct ProcessDescriptor
 {
 	/* stack pointer into the "workSpace" */
-	unsigned char *sp;
+	volatile unsigned char *sp;
 
 	unsigned char workSpace[WORKSPACE];
 	// The current state of the process
@@ -110,3 +111,4 @@ void queue_init(task_queue_t * list);
 void enqueue(task_queue_t * list, PD * task);
 PD * deque(task_queue_t * list);
 PD * peek(task_queue_t * list);
+void task_list_insert_into_offset_order(task_queue_t * list, PD * task);

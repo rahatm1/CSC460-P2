@@ -6,7 +6,7 @@
 #include <util/delay.h>
 
 void Pong() {
-	for(;;) {
+	for (;;) {
 		toggle_LED_C7();
 		_delay_ms(100);
 		Task_Next();
@@ -16,6 +16,7 @@ void Pong() {
 void Ping() {
 	for (;;) {
 		toggle_LED_B7();
+		_delay_ms(100);
 		Task_Next();
 	}
 }
@@ -23,7 +24,7 @@ void Ping() {
 void a_main(void) {
 	init_LED_C7();
 	init_LED_B7();
-
-	Task_Create_Period(Pong, 0, 100, 30, 300);
+	Task_Create_System(Pong, 0);
 	Task_Create_RR(Ping, 0);
+	/* Task_Create_RR(Pong, 0); */
 }

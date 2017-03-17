@@ -20,7 +20,7 @@
 DEVICE     = atmega2560
 CLOCK      = 16000000
 PROGRAMMER = -c avrispmkII -P /dev/cu.usbmodemFD121 -b 115200 -D
-OBJECTS    = kernel.o cswitch.o LED/LED_Test.o UART/BlockingUART.o common.o Tests/test.o
+OBJECTS    = common.o kernel.o cswitch.o LED/LED_Test.o UART/BlockingUART.o Tests/test.o
 FUSES	   = -U lfuse:w:0xff:m	-U hfuse:w:0xd8:m	-U efuse:w:0xFD:m
 
 # ATMega8 fuse bits used above (fuse bits for other devices are different!):
