@@ -155,10 +155,7 @@ static void Dispatch()
 
 //TODO: Handle BLOCKED better
 	if (Cp->state != RUNNING ) {
-		if (system_tasks.head) {
-			while (peek(&system_tasks)->state == BLOCKED) {
-               enqueue(&system_tasks, deque(&system_tasks));
-			}
+		if (system_tasks.head && peek(&system_tasks)->state != BLOCKED) {
 			Cp = peek(&system_tasks);
         } else if (periodic_tasks.len > 0 && num_ticks >= peek(&periodic_tasks)->next_start) {
     		PD* p = peek(&periodic_tasks);
@@ -171,9 +168,6 @@ static void Dispatch()
 #endif
     		Cp = p;
 		} else if (rr_tasks.head) {
-			while (peek(&rr_tasks)->state == BLOCKED) {
-               enqueue(&rr_tasks, deque(&rr_tasks));
-			}
 			Cp = peek(&rr_tasks);
 		}
 	}
@@ -205,7 +199,7 @@ void Next_Kernel_Request() {
        switch(Cp->request){
        case NEXT:
        switch (Cp->type) {
-           Cp->state = READY;
+	       if (Cp->state != BLOCKED) Cp->state = READY;
            case SYSTEM:
                enqueue(&system_tasks, deque(&system_tasks));
                break;
