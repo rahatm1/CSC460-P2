@@ -20,7 +20,7 @@
 DEVICE     = atmega2560
 CLOCK      = 16000000
 PROGRAMMER = -c avrispmkII -P /dev/cu.usbmodemFD121 -b 115200 -D
-OBJECTS    = kernel.o cswitch.o LED/LED_Test.o UART/BlockingUART.o common.o
+OBJECTS    = kernel.o cswitch.o LED/LED_Test.o UART/BlockingUART.o common.o Tests/test.o
 FUSES	   = -U lfuse:w:0xff:m	-U hfuse:w:0xd8:m	-U efuse:w:0xFD:m
 
 # ATMega8 fuse bits used above (fuse bits for other devices are different!):
@@ -49,7 +49,7 @@ FUSES	   = -U lfuse:w:0xff:m	-U hfuse:w:0xd8:m	-U efuse:w:0xFD:m
 # Tune the lines below only if you know what you are doing:
 
 AVRDUDE = avrdude $(PROGRAMMER) -p $(DEVICE)
-COMPILE = avr-gcc -Wall -Wextra -Wno-main -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
+COMPILE = avr-gcc -Wall -Wno-main -Os -DF_CPU=$(CLOCK) -mmcu=$(DEVICE)
 
 # symbolic targets:
 all: switch kernel.hex
@@ -99,7 +99,7 @@ disasm:	kernel.elf
 	avr-objdump -d kernel.elf
 
 cpp:
-	$(COMPILE) -E kernel.c LED/LED_Test.c UART/BlockingUART.c common.c
+	$(COMPILE) -E kernel.c LED/LED_Test.c UART/BlockingUART.c common.c Tests/test.c
 
 switch:
 	avr-gcc -c -O2 -DF_CPU=${CLOCK} -mmcu=${DEVICE} -Wa,--gstabs -o cswitch.o cswitch.S

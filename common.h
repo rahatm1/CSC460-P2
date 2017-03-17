@@ -1,4 +1,4 @@
-typedef void (*voidfuncptr) (void);      /* pointer to void f(void) */ 
+typedef void (*voidfuncptr) (void);      /* pointer to void f(void) */
 
 /**
   * This internal kernel function is the context switching mechanism.
@@ -11,7 +11,7 @@ typedef void (*voidfuncptr) (void);      /* pointer to void f(void) */
   * the middle of this function, where the kernel was suspended.
   * After executing the bottom half, the context of Cp is saved and the context
   * of the kernel is restore. Hence, when this function returns, kernel is active
-  * again, but Cp is not running any more. 
+  * again, but Cp is not running any more.
   * (See file "switch.S" for details.)
   */
 extern void CSwitch();
@@ -109,3 +109,4 @@ task_queue_t rr_tasks;
 void queue_init(task_queue_t * list);
 void enqueue(task_queue_t * list, PD * task);
 PD * deque(task_queue_t * list);
+PD * peek(task_queue_t * list);

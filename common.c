@@ -33,3 +33,7 @@ PD * deque(task_queue_t * list) {
         return p;
     }
 }
+
+PD * peek(task_queue_t * list) {
+	return list->head;
+}
