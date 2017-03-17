@@ -190,6 +190,19 @@ void Next_Kernel_Request() {
        //TODO
            break;
        case NEXT:
+       switch (Cp->type) {
+           Cp->state = READY;
+           case SYSTEM:
+               enqueue(&system_tasks, deque(&system_tasks));
+               break;
+           case PERIODIC:
+           //TODO
+            //    deque(&periodic_tasks);
+               break;
+           case RR:
+               enqueue(&rr_tasks, deque(&rr_tasks));
+               break;
+       }
        case NONE:
          /* NONE could be caused by a timer interrupt */
           Cp->state = READY;

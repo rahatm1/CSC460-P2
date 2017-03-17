@@ -25,4 +25,5 @@ void a_main(void) {
 	init_LED_C7();
 	init_LED_B7();
 	Task_Create_RR(Pong, 0);
+	Task_Create_RR(Ping, 0);
 }
