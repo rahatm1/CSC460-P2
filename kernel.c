@@ -199,7 +199,6 @@ void Next_Kernel_Request() {
        switch(Cp->request){
        case NEXT:
        switch (Cp->type) {
-	       if (Cp->state != BLOCKED) Cp->state = READY;
            case SYSTEM:
                enqueue(&system_tasks, deque(&system_tasks));
                break;
@@ -330,6 +329,7 @@ CHAN Chan_Init() {
     return ++chan_num;
 }
 
+//TODO: cleanup sender, when done?
 void Send( CHAN ch, int v ) {
     if (channels[ch].sender != NULL) {
         OS_Abort(-5);
@@ -338,13 +338,30 @@ void Send( CHAN ch, int v ) {
 	Cp->message = v;
     channels[ch].sender = (PD *) Cp;
 
-    if (channels[ch].receiver == NULL) {
+	uint8_t recv_index = channels[ch].recv_index;
+    if (recv_index == 0) {
         Disable_Interrupt();
         Cp->state = BLOCKED;
         Cp->request = NEXT;
         Enter_Kernel();
     }
-    channels[ch].receiver->state = READY;
+	int i;
+	for (i=0; i<recv_index; i++) {
+    	channels[ch].receiver[i]->state = READY;
+	}
+	recv_index = 0;
+}
+
+void Write(CHAN ch, int v) {
+	Cp->message = v;
+    channels[ch].sender = (PD *) Cp;
+
+	uint8_t recv_index = channels[ch].recv_index;
+	int i;
+	for (i=0; i<recv_index; i++) {
+    	channels[ch].receiver[i]->state = READY;
+	}
+	recv_index = 0;
 }
 
 int Recv( CHAN ch ) {
@@ -352,7 +369,8 @@ int Recv( CHAN ch ) {
         Disable_Interrupt();
         Cp->state = BLOCKED;
         Cp->request = NEXT;
-        channels[ch].receiver = (PD*) Cp;
+		uint8_t recv_index = channels[ch].recv_index;
+        channels[ch].receiver[recv_index++] = (PD*) Cp;
         Enter_Kernel();
     }
     channels[ch].sender->state = READY;

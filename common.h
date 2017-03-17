@@ -102,8 +102,8 @@ typedef struct ProcessDescriptor
 
 typedef struct channel_t {
     PD* sender;
-    PD* receiver;
-    volatile int message;
+    PD* receiver[16];
+	uint8_t recv_index;
 } channel;
 
 typedef struct task_queue_type {
