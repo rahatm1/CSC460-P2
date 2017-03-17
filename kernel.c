@@ -345,11 +345,16 @@ void Send( CHAN ch, int v ) {
         Cp->request = NEXT;
         Enter_Kernel();
     }
+#ifdef DEBUG
+    UART_print("Channel %d\n", ch);
+    UART_print("from send %d\n", channels[ch].sender->message);
+    UART_print("recv index %d\n", recv_index);
+#endif
 	int i;
 	for (i=0; i<recv_index; i++) {
     	channels[ch].receiver[i]->state = READY;
 	}
-	recv_index = 0;
+	channels[ch].recv_index = 0;
 }
 
 void Write(CHAN ch, int v) {
@@ -361,7 +366,7 @@ void Write(CHAN ch, int v) {
 	for (i=0; i<recv_index; i++) {
     	channels[ch].receiver[i]->state = READY;
 	}
-	recv_index = 0;
+	channels[ch].recv_index = 0;
 }
 
 int Recv( CHAN ch ) {
@@ -371,8 +376,16 @@ int Recv( CHAN ch ) {
         Cp->request = NEXT;
 		uint8_t recv_index = channels[ch].recv_index;
         channels[ch].receiver[recv_index++] = (PD*) Cp;
+		channels[ch].recv_index = recv_index;
+#ifdef DEBUG
+    UART_print("Channel %d\n", ch);
+    UART_print("before kernel, recv %d\n", recv_index);
+#endif
         Enter_Kernel();
     }
+#ifdef DEBUG
+    UART_print("from recv %d\n", channels[ch].sender->message);
+#endif
     channels[ch].sender->state = READY;
 	return channels[ch].sender->message;
 }

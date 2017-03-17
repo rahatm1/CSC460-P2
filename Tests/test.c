@@ -19,7 +19,8 @@ void Pong() {
 }
 
 void Ping() {
-	Send(c1, 5);
+	_delay_ms(4000);
+	Write(c1, 5);
 	for (;;) {
 		toggle_LED_B7();
 		_delay_ms(100);
@@ -32,6 +33,6 @@ void a_main(void) {
 	init_LED_B7();
 
 	c1 = Chan_Init();
-	Task_Create_System(Ping, 0);
 	Task_Create_System(Pong, 0);
+	Task_Create_System(Ping, 0);
 }
