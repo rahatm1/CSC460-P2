@@ -71,7 +71,7 @@ volatile unsigned char *CurrentSp;
 /** number of tasks created so far */
 volatile static unsigned int Tasks;
 
-volatile uint64_t num_ticks = 0;
+volatile unsigned int num_ticks = 0;
 uint8_t chan_num = 0;
 
 BOOL KernelActive = FALSE;
@@ -478,6 +478,10 @@ ISR(TIMER3_COMPA_vect)
   Enter_Kernel();
 }
 
+unsigned int Now() {
+	unsigned int tmp = num_ticks * MSECPERTICK;
+	return tmp + TCNT3/62;
+}
 
 /**
   * This function creates two cooperative tasks, "Ping" and "Pong". Both
