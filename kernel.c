@@ -168,6 +168,9 @@ static void Dispatch()
 #endif
     		Cp = p;
 		} else if (rr_tasks.head) {
+			while (peek(&rr_tasks)->state == BLOCKED) {
+               enqueue(&rr_tasks, deque(&rr_tasks));
+			}
 			Cp = peek(&rr_tasks);
 		}
 	}
@@ -330,7 +333,6 @@ CHAN Chan_Init() {
     return ++chan_num;
 }
 
-//TODO: cleanup sender, when done?
 void Send( CHAN ch, int v ) {
     if (channels[ch].sender != NULL) {
         OS_Abort(-5);
@@ -355,7 +357,6 @@ void Send( CHAN ch, int v ) {
 	for (i=0; i<recv_index; i++) {
     	channels[ch].receiver[i]->state = READY;
 	}
-	channels[ch].recv_index = 0;
 }
 
 void Write(CHAN ch, int v) {
@@ -371,7 +372,6 @@ void Write(CHAN ch, int v) {
 	for (i=0; i<recv_index; i++) {
     	channels[ch].receiver[i]->state = READY;
 	}
-	channels[ch].recv_index = 0;
 }
 
 int Recv( CHAN ch ) {
@@ -389,11 +389,18 @@ int Recv( CHAN ch ) {
         Enter_Kernel();
     }
 #ifdef DEBUG
+	UART_print("%d", Cp->arg);
     UART_print("from recv, msg %d\n", channels[ch].sender->message);
 #endif
     channels[ch].sender->state = READY;
 	Cp->state = READY;
-	return channels[ch].sender->message;
+	int msg = channels[ch].sender->message;
+	channels[ch].recv_index--;
+	if (channels[ch].recv_index == 0) {
+      memset(&(channels[ch]),0,sizeof(channel));
+	  chan_num--;
+	}
+	return msg;
 }
 
 PID Task_Create_System(voidfuncptr f, int arg) {
