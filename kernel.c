@@ -483,6 +483,10 @@ unsigned int Now() {
 	return tmp + TCNT3/62;
 }
 
+void idle_task() {
+	for(;;) {};
+}
+
 /**
   * This function creates two cooperative tasks, "Ping" and "Pong". Both
   * will run forever.
@@ -497,5 +501,6 @@ void main()
 
    OS_Init();
    Task_Create_System(a_main, 0);
+   Task_Create_RR(idle_task, 0);
    OS_Start();
 }
