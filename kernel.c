@@ -265,6 +265,7 @@ void Next_Kernel_Request() {
 #ifdef DEBUG
 			UART_print("killed task\n");
 			UART_print("type: %d\n", Cp->type);
+			UART_print("PID: %d\n", Cp->pid-1);
 #endif
 		  Cp->state = DEAD;
           Dispatch();
@@ -362,6 +363,10 @@ void Write(CHAN ch, int v) {
     channels[ch].sender = (PD *) Cp;
 
 	uint8_t recv_index = channels[ch].recv_index;
+#ifdef DEBUG
+    UART_print("Channel %d\n", ch);
+    UART_print("from write, recv index %d\n", recv_index);
+#endif
 	int i;
 	for (i=0; i<recv_index; i++) {
     	channels[ch].receiver[i]->state = READY;
@@ -379,14 +384,15 @@ int Recv( CHAN ch ) {
 		channels[ch].recv_index = recv_index;
 #ifdef DEBUG
     UART_print("Channel %d\n", ch);
-    UART_print("before kernel, recv %d\n", recv_index);
+    UART_print("before kernel, recv index%d\n", recv_index);
 #endif
         Enter_Kernel();
     }
 #ifdef DEBUG
-    UART_print("from recv %d\n", channels[ch].sender->message);
+    UART_print("from recv, msg %d\n", channels[ch].sender->message);
 #endif
     channels[ch].sender->state = READY;
+	Cp->state = READY;
 	return channels[ch].sender->message;
 }
 
@@ -441,9 +447,6 @@ void Task_Terminate()
 	Cp->request = TERMINATE;
 	Process[Cp->pid-1].state = DEAD;
 	Tasks--;
-#ifdef DEBUG
-			UART_print("killed task\n");
-#endif
 	Enter_Kernel();
 	/* never returns here! */
 }
