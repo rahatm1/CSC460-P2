@@ -43,7 +43,7 @@ void setupTimer(void);
   * This table contains ALL process descriptors. It doesn't matter what
   * state a task is in.
   */
-static PD Process[MAXTHREAD];
+static PD Process[MAXTHREAD+1];
 static channel channels[MAXCHAN];
 
 /**
@@ -86,10 +86,10 @@ PD * Kernel_Create_Task( voidfuncptr f, PRIORITY_LEVELS type )
 {
    int x;
 
-   if (Tasks == MAXTHREAD) return NULL;  /* Too many task! */
+   if (Tasks == MAXTHREAD +1) return NULL;  /* Too many task! */
 
    /* find a DEAD PD that we can use  */
-   for (x = 0; x < MAXTHREAD; x++) {
+   for (x = 0; x < MAXTHREAD +1; x++) {
        if (Process[x].state == DEAD) break;
    }
    Tasks++;
@@ -130,7 +130,7 @@ PD * Kernel_Create_Task( voidfuncptr f, PRIORITY_LEVELS type )
    p->code = f;		/* function to be executed as a task */
    p->request = NONE;
    p->type = type;
-   p->pid = x;
+   p->pid = x+1;
    p->ticks_remaining = 0;
 
    /*----END of NEW CODE----*/
@@ -287,7 +287,7 @@ void OS_Init()
   KernelActive = FALSE;
   //Reminder: Clear the memory for the task on creation.
   int x;
-   for (x = 0; x < MAXTHREAD; x++) {
+   for (x = 0; x < MAXTHREAD +1; x++) {
       memset(&(Process[x]),0,sizeof(PD));
       Process[x].state = DEAD;
    }
@@ -392,6 +392,7 @@ int Recv( CHAN ch ) {
 
 PID Task_Create_System(voidfuncptr f, int arg) {
     PD * p = Kernel_Create_Task(f, SYSTEM);
+	if (p == NULL) return 0;
     p->arg = arg;
     enqueue(&system_tasks, p);
     return p->pid;
@@ -399,6 +400,7 @@ PID Task_Create_System(voidfuncptr f, int arg) {
 
 PID Task_Create_Period(voidfuncptr f, int arg, TICK period, TICK wcet, TICK offset){
     PD * p = Kernel_Create_Task(f, PERIODIC);
+	if (p == NULL) return 0;
     p->arg = arg;
 
     p->period = period;
@@ -413,6 +415,7 @@ PID Task_Create_Period(voidfuncptr f, int arg, TICK period, TICK wcet, TICK offs
 
 PID Task_Create_RR(voidfuncptr f, int arg) {
     PD * p = Kernel_Create_Task(f, RR);
+	if (p == NULL) return 0;
     p->arg = arg;
     enqueue(&rr_tasks, p);
 	return p->pid;
@@ -436,6 +439,8 @@ void Task_Terminate()
 {
 	Disable_Interrupt();
 	Cp->request = TERMINATE;
+	Process[Cp->pid-1].state = DEAD;
+	Tasks--;
 #ifdef DEBUG
 			UART_print("killed task\n");
 #endif
