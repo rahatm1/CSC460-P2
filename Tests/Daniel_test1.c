@@ -56,8 +56,8 @@ void Task_S1()
 	int val = Recv(c1);
 	if(val == 0) {
 		DEBUG_ON(1);
+		Task_Next();
 		for(;;) {
-			Task_Next();
 		}
 	}
 }
@@ -67,8 +67,8 @@ void Task_S2()
 	int val = Recv(c1);
 	if(val == 0) {
 		DEBUG_ON(2);
+		Task_Next();
 		for(;;) {
-			Task_Next();
 		}
 	}	
 }
@@ -78,8 +78,8 @@ void Task_S3()
 	int val = Recv(c1);
 	if(val == 0) {
 		DEBUG_ON(3);
+		Task_Next();
 		for(;;) {
-			Task_Next();
 		}
 	}	
 }
