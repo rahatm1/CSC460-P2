@@ -6,7 +6,7 @@
 #include <util/delay.h>
 #include <avr/io.h>
 #include "UART/BlockingUART.h"
-#include "joystick.h"
+#include "sensor/joystick.h"
 
 void setup() {
 	setup_controllers();
