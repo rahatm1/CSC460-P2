@@ -13,6 +13,14 @@ void UART_Init0(uint32_t baud_rate) {
 	// Default frame format: 8 data, 1 stop bit , no parity
 }
 
+void UART_Init1(uint32_t baud_rate) {
+	// Set baud rate
+	UBRR1 = MYBRR(baud_rate);
+	// Enable receiver and transmitter
+	UCSR1B = _BV(TXEN1) | _BV(RXEN1);
+	// Default frame format: 8 data, 1 stop bit , no parity
+}
+
 void UART_Transmit0(unsigned char data) {
 	// Busy wait for empty transmit buffer
 	while (!(UCSR0A & _BV(UDRE0)))
@@ -21,12 +29,28 @@ void UART_Transmit0(unsigned char data) {
 	UDR0 = data;
 }
 
+void UART_Transmit1(unsigned char data) {
+	// Busy wait for empty transmit buffer
+	while (!(UCSR1A & _BV(UDRE1)))
+		;
+	// Put data into buffer, sends the data
+	UDR1 = data;
+}
+
 unsigned char UART_Receive0() {
 	// Busy wait for data to be received
 	while (!(UCSR0A & _BV(RXC0)))
 		;
 	// Get and return received data from buffer
 	return UDR0 ;
+}
+
+unsigned char UART_Receive1() {
+	// Busy wait for data to be received
+	while (!(UCSR1A & _BV(RXC1)))
+		;
+	// Get and return received data from buffer
+	return UDR1 ;
 }
 
 void UART_print(const char* fmt, ...) {
