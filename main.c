@@ -7,7 +7,7 @@
 #include <avr/io.h>
 #include "UART/BlockingUART.h"
 #include "sensor/joystick.h"
-#include "servo.h"
+#include "servo/servo.h"
 
 int panPos = 208;
 int tiltPos = 208;
@@ -40,7 +40,7 @@ void panRight() {
 
 void switchLaser() {
 	if(laserOn==1){
-		laserOn=0
+		laserOn=0;
 		toggle_LED_C7();
 	}else{
 		laserOn=1;
@@ -51,21 +51,21 @@ void switchLaser() {
 void servo(){
 	servo_init();
 	while(1){
-		int command = UART_Recieve1();
+		int command = 'U';
 		switch(command){
-			case: 'U': //tilt up
+			case 'U': //tilt up
 			tiltUp();
 			break;
-			case: 'D': //tilt down
+			case 'D': //tilt down
 			tiltDown();
 			break;
-			case: 'L': //pan left
+			case 'L': //pan left
 			panLeft();
 			break;
-			case: 'R': //pan right
+			case 'R': //pan right
 			panRight();
 			break;
-			case: 'Z':
+			case 'Z':
 			switchLaser();
 			break;
 		}
@@ -75,6 +75,6 @@ void servo(){
 
 void a_main(void) {
 	UART_Init1(9600);
-	Task_Create_Period(0,25,10,6);
+	Task_Create_Period(servo, 0,25,10,6);
 }
 
