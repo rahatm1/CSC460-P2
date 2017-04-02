@@ -50,6 +50,7 @@ void switchLaser() {
 
 void servo(){
 	servo_init();
+	init_LED_C7();
 	while(1){
 		int command = UART_Recieve1();
 		switch(command){
@@ -69,6 +70,7 @@ void servo(){
 			switchLaser();
 			break;
 		}
+		toggle_LED_C7();
 		Task_Next();
 	}
 }
