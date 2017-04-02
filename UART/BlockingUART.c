@@ -53,6 +53,13 @@ unsigned char UART_Receive1() {
 	return UDR2 ;
 }
 
+int8_t UART_Receive1_Non_Blocking() {
+	if (UCSR2A & _BV(RXC2)) {
+		return UDR2;
+	}
+	return -1;
+}
+
 void UART_print(const char* fmt, ...) {
 	uint16_t sreg = SREG;
 	cli();

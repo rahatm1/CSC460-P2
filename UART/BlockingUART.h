@@ -22,5 +22,6 @@ void UART_Transmit1(unsigned char data);
 unsigned char UART_Receive1();
 void UART_print(const char* fmt, ...);
 void UART_send_raw_bytes(const uint8_t num_bytes, const uint8_t* data);
+int8_t UART_Receive1_Non_Blocking();
 
 #endif /* BLOCKINGUART_H_ */
