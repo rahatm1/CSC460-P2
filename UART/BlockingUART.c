@@ -15,9 +15,9 @@ void UART_Init0(uint32_t baud_rate) {
 
 void UART_Init1(uint32_t baud_rate) {
 	// Set baud rate
-	UBRR1 = MYBRR(baud_rate);
+	UBRR2 = MYBRR(baud_rate);
 	// Enable receiver and transmitter
-	UCSR1B = _BV(TXEN1) | _BV(RXEN1);
+	UCSR2B = _BV(TXEN2) | _BV(RXEN2);
 	// Default frame format: 8 data, 1 stop bit , no parity
 }
 
@@ -31,10 +31,10 @@ void UART_Transmit0(unsigned char data) {
 
 void UART_Transmit1(unsigned char data) {
 	// Busy wait for empty transmit buffer
-	while (!(UCSR1A & _BV(UDRE1)))
+	while (!(UCSR2A & _BV(UDRE2)))
 		;
 	// Put data into buffer, sends the data
-	UDR1 = data;
+	UDR2 = data;
 }
 
 unsigned char UART_Receive0() {
@@ -47,10 +47,10 @@ unsigned char UART_Receive0() {
 
 unsigned char UART_Receive1() {
 	// Busy wait for data to be received
-	while (!(UCSR1A & _BV(RXC1)))
+	while (!(UCSR2A & _BV(RXC2)))
 		;
 	// Get and return received data from buffer
-	return UDR1 ;
+	return UDR2 ;
 }
 
 void UART_print(const char* fmt, ...) {
