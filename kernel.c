@@ -465,28 +465,28 @@ int Task_GetArg() {
 
 void setupTimer() {
   //Clear timer config.
-  TCCR3A = 0;
-  TCCR3B = 0;
+  TCCR4A = 0;
+  TCCR4B = 0;
   //Set to CTC (mode 4)
-  TCCR3B |= (1<<WGM32);
+  TCCR4B |= (1<<WGM42);
 
   //Set prescaller to 256
-  TCCR3B |= (1<<CS32);
+  TCCR4B |= (1<<CS42);
 
   //Set TOP value (0.01 seconds)
-  OCR3A = 625;
+  OCR4A = 625;
 
   //Enable interupt A for timer 3.
-  TIMSK3 |= (1<<OCIE3A);
+  TIMSK4 |= (1<<OCIE4A);
 
   //Set timer to 0 (optional here).
-  TCNT3 = 0;
+  TCNT4 = 0;
 
   Enable_Interrupt();
 }
 
 
-ISR(TIMER3_COMPA_vect)
+ISR(TIMER4_COMPA_vect)
 {
   num_ticks++;
   Cp->request = TIMER;
@@ -495,7 +495,7 @@ ISR(TIMER3_COMPA_vect)
 
 unsigned int Now() {
 	unsigned int tmp = num_ticks * MSECPERTICK;
-	return tmp + TCNT3/62;
+	return tmp + TCNT4/62;
 }
 
 void idle_task() {
