@@ -8,139 +8,144 @@
 #include "UART/BlockingUART.h"
 #include "sensor/joystick.h"
 
-typedef int boolean;
-#define true 1
-#define false 0
+#define DEBUG 1
+#define bit_get(p,m) ((p) & (m))
+#define BIT(x) (0x01 << (x))
+
+
 int JoyStick_X2 = 0; // x drive
 int JoyStick_Y2 = 1; // y drive
 int JoyStick_Z2 = 34; // key
 int JoyStick_X = 2; // x 
 int JoyStick_Y = 3; // y 
 int JoyStick_Z = 35; // key
-boolean stopped = true;
-//int photocellPin = A8;
-int photocellReading;
+BOOL stopped = TRUE;
 
-void setup() {
-	while(1) {
-		UART_print("%u\n",read_analog(JoyStick_X2) );
-		UART_print("%u\n",read_analog(JoyStick_Y2) ); 
-		UART_print("\n");
-		_delay_ms(1000);
-	}
+void digital_init_C(int port) {
+	DDRC &= ~(BIT(port));
 }
+
 void drive(){
 	while(1) {
+
 		int x = read_analog(JoyStick_X2); 
 		int y = read_analog(JoyStick_Y2);
-		int z = 1; //(add code)to be filled in later
+		BOOL z = bit_get(PINC, 6); //(add code)to be filled in later
+
+#ifdef DEBUG
 		UART_print("%u\n",x);
-		UART_print("%u\n", y); 
+		UART_print("%u\n", y);
+		UART_print("%u\n", z);
 		UART_print("\n");
+#endif
 		//UART_Transmit0('a'); //use to send charcter -> use 1 to send over BT
 		  if (z == 1) { //fire up the meat grinder boys, things are about to get hairy
-    if (y <= 127) {
-      if (x <= 383) {
-       UART_Transmit0('q');
-        stopped = false;
-      } else if (x <= 639) {
-        UART_Transmit0('o');
-        stopped = false;
-      } else {
-        UART_Transmit0('l');
-        stopped = false;
-      }
+			if (y <= 127) {
+			  if (x <= 383) {
+			   UART_Transmit0('q');
+				stopped = FALSE;
+			  } else if (x <= 639) {
+				UART_Transmit0('o');
+				stopped = FALSE;
+			  } else {
+				UART_Transmit0('l');
+				stopped = FALSE;
+			  }
 
 
-    } else if (y <= 383) {
-      if (x <= 127) {
-        UART_Transmit0('q');
-        stopped = false;
-      } else if (x <= 383) {
-        UART_Transmit0('p');;
-        stopped = false;
-      } else if (x <= 639) {
-        UART_Transmit0('n');
-        stopped = false;
-      } else if (x <= 895) {
-        UART_Transmit0('m');
-        stopped = false;
-      } else {
-        UART_Transmit0('l');
-        stopped = false;
-      }
+			} else if (y <= 383) {
+			  if (x <= 127) {
+				UART_Transmit0('q');
+				stopped = FALSE;
+			  } else if (x <= 383) {
+				UART_Transmit0('p');;
+				stopped = FALSE;
+			  } else if (x <= 639) {
+				UART_Transmit0('n');
+				stopped = FALSE;
+			  } else if (x <= 895) {
+				UART_Transmit0('m');
+				stopped = FALSE;
+			  } else {
+				UART_Transmit0('l');
+				stopped = FALSE;
+			  }
 
 
-    } else if (y <= 639) {
-      if (x <= 127) {
-        UART_Transmit0('k');
-        stopped = false;
-      } else if (x <= 383) {
-        UART_Transmit0('j');;
-        stopped = false;
-      } else if (x <= 639) {
-        if (stopped) {
-          //do nothing
-        } else {
-          UART_Transmit0('i');
-          stopped = true;
-        }
-      } else if (x <= 895) {
-        UART_Transmit0('h');
-        stopped = false;
-      } else {
-        UART_Transmit0('g');
-        stopped = false;
-      }
+			} else if (y <= 639) {
+			  if (x <= 127) {
+				UART_Transmit0('k');
+				stopped = FALSE;
+			  } else if (x <= 383) {
+				UART_Transmit0('j');;
+				stopped = FALSE;
+			  } else if (x <= 639) {
+				if (stopped) {
+				  //do nothing
+				} else {
+				  UART_Transmit0('i');
+				  stopped = TRUE;
+				}
+			  } else if (x <= 895) {
+				UART_Transmit0('h');
+				stopped = FALSE;
+			  } else {
+				UART_Transmit0('g');
+				stopped = FALSE;
+			  }
 
 
-    } else if (y <= 895) {
-      if (x <= 127) {
-        UART_Transmit0('f');
-        stopped = false;
-      } else if (x <= 383) {
-        UART_Transmit0('e');
-        stopped = false;
-      } else if (x <= 639) {
-        UART_Transmit0('d');
-        stopped = false;
-      } else if (x <= 895) {
-        UART_Transmit0('b');
-        stopped = false;
-      } else {
-        UART_Transmit0('a');
-        stopped = false;
-      }
+			} else if (y <= 895) {
+			  if (x <= 127) {
+				UART_Transmit0('f');
+				stopped = FALSE;
+			  } else if (x <= 383) {
+				UART_Transmit0('e');
+				stopped = FALSE;
+			  } else if (x <= 639) {
+				UART_Transmit0('d');
+				stopped = FALSE;
+			  } else if (x <= 895) {
+				UART_Transmit0('b');
+				stopped = FALSE;
+			  } else {
+				UART_Transmit0('a');
+				stopped = FALSE;
+			  }
 
 
-    } else {
-      if (x <= 383) {
-        UART_Transmit0('f');
-        stopped = false;
-      } else if (x <= 639) {
-        UART_Transmit0('c');
-        stopped = false;
-      } else {
-        UART_Transmit0('a');
-        stopped = false;
-      }
-    }
-  } else { //use me to do something later
-    UART_Transmit0('i');
-    UART_print("STOPPING"); 
-    stopped = true;
-  }
+			} else {
+			  if (x <= 383) {
+				UART_Transmit0('f');
+				stopped = FALSE;
+			  } else if (x <= 639) {
+				UART_Transmit0('c');
+				stopped = FALSE;
+			  } else {
+				UART_Transmit0('a');
+				stopped = FALSE;
+			  }
+			}
+	  } else { //use me to do something later
+		UART_Transmit0('i');
+#ifdef DEBUG
+		UART_print("STOPPING"); 
+#endif
+		stopped = TRUE;
+	  }
 		Task_Next();
 	}
 }
 
 void aim() { 
 	while(1){
+
 	  int x2 = read_analog(JoyStick_X); 
 	  int y2 = read_analog(JoyStick_Y);
-	  int z2 = 1;//digitalRead (JoyStick_Z);
-	  //servo and laser code
+	  BOOL z2 = bit_get(PINC, 7); //(add code)to be filled in later
+
 	  if (z2 == 1) {
+
 		if (x2 <= 383) {
 		  UART_Transmit0('R');
 		} else if (x2 >= 639) {
@@ -161,13 +166,10 @@ void aim() {
 	}
 }
 
-void photo() {//start photo
-  
-}//end photo
-
 void a_main(void) {
-	//Task_Create_System(setup, 0);
 	setup_controllers();
+	digital_init_C(6);
+	digital_init_C(7);
 	UART_Init1(9600);
 	Task_Create_Period(drive,0,25,10,10);
 	Task_Create_Period(aim,0,25,10,8);

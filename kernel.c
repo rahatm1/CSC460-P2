@@ -148,10 +148,10 @@ static void Dispatch()
      /* find the next READY task
        * Note: if there is no READY task, then this will loop forever!.
        */
-/* #ifdef DEBUG */
-/*         UART_print("Dispatch\n"); */
-/*         UART_print("num_ticks %d\n", num_ticks); */
-/* #endif */
+#ifdef DEBUG
+        UART_print("Dispatch\n");
+        UART_print("num_ticks %d\n", num_ticks);
+#endif
 
 //TODO: Handle BLOCKED better
 	if (Cp->state != RUNNING ) {
