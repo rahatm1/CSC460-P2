@@ -19,7 +19,7 @@
 
 DEVICE     = atmega2560
 CLOCK      = 16000000
-PROGRAMMER = -c avrispmkII -P /dev/cu.usbmodemFD121 -b 115200 -D
+PROGRAMMER = -c avrispmkII -P \\..\\COM3 -b 115200 -D
 OBJECTS    = common.o kernel.o cswitch.o LED/LED_Test.o UART/RoombaUART.o UART/BlockingUART.o main.o sensor/joystick.o Roomba/roomba.o
 FUSES	   = -U lfuse:w:0xff:m	-U hfuse:w:0xd8:m	-U efuse:w:0xFD:m
 
