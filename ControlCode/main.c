@@ -8,6 +8,9 @@
 #include "UART/BlockingUART.h"
 #include "sensor/joystick.h"
 
+typedef int boolean;
+#define true 1
+#define false 0
 int JoyStick_X2 = 0; // x drive
 int JoyStick_Y2 = 1; // y drive
 int JoyStick_Z2 = 34; // key
@@ -28,8 +31,8 @@ void setup() {
 }
 void drive(){
 	while(1) {
-		int x = read_analog(JoyStick_X2) 
-		int y = read_analog(JoyStick_Y2)
+		int x = read_analog(JoyStick_X2); 
+		int y = read_analog(JoyStick_Y2);
 		int z = 1; //(add code)to be filled in later
 		UART_print("%u\n",x);
 		UART_print("%u\n", y); 
@@ -133,28 +136,29 @@ void drive(){
 
 void aim() { 
 	while(1){
-  int x2 = read_analog(JoyStick_X) 
-  int y2 = read_analog(JoyStick_Y)
-  int z2 = 1;//digitalRead (JoyStick_Z);
+	  int x2 = read_analog(JoyStick_X); 
+	  int y2 = read_analog(JoyStick_Y);
+	  int z2 = 1;//digitalRead (JoyStick_Z);
+	  //servo and laser code
+	  if (z2 == 1) {
+		if (x2 <= 383) {
+		  UART_Transmit0('R');
+		} else if (x2 >= 639) {
+		  UART_Transmit0('L');
+		}
+		if (y2 <= 383) {
+		  UART_Transmit0('D');
+		} else if (y2 >= 639) {
+		  UART_Transmit0('U');
+		}else{
+		  UART_Transmit0('S');
+		}
+	  } else {
+		UART_Transmit0('Z');
+	  }
 
-  //servo and laser code
-  if (z2 == 1) {
-    if (x2 <= 383) {
-      UART_Transmit0('R');
-    } else if (x2 >= 639) {
-      UART_Transmit0('L');
-    }
-    if (y2 <= 383) {
-      UART_Transmit0('D');
-    } else if (y2 >= 639) {
-      UART_Transmit0('U');
-    }else{
-      UART_Transmit0('S');
-    }
-  } else {
-    UART_Transmit0('Z');
-  }
-}
+		Task_Next();
+	}
 }
 
 void photo() {//start photo
@@ -165,7 +169,7 @@ void a_main(void) {
 	//Task_Create_System(setup, 0);
 	setup_controllers();
 	UART_Init1(9600);
-	Task_Create_Period(drive,0,15,5,10);
-	Task_Create_Period(aim,3,15,5,10);
+	Task_Create_Period(drive,0,25,10,10);
+	Task_Create_Period(aim,0,25,10,8);
 }
 
