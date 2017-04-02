@@ -7,76 +7,103 @@
 #include <avr/io.h>
 #include "UART/BlockingUART.h"
 #include "sensor/joystick.h"
-#include "servo.h"
+#include  "Roomba/roomba.h"
 
-int panPos = 208;
-int tiltPos = 208;
-int laserOn = 0; //0 is Off, 1 is On
-int laserPin = 30;
+void read_bt() {
+  for(;;){
+  char command = UART_Receive1_Non_Blocking();
+  UART_Transmit0(command);
+  if (command != -1) {
+	UART_Transmit0(command);
+    switch (command)
+    {
+    //Roomba
+    case 'a': //fast forward left
+      Roomba_Drive(400,250);
+      break;
+    case 'b': //slow forward left
+      Roomba_Drive(100, 250);
+      break;
+    case 'c': //fast forward
+      Roomba_Drive(400, 32768);
+      break;
+    case 'd': //slow forward
+      Roomba_Drive(100, 32768);
+      break;
+    case 'e': //slow forward right
+      Roomba_Drive(100,-250);
+      break;
+    case 'f': //fast forward right
+      Roomba_Drive(400,-250);
+      break;
+    case 'g': //fast rotate left on spot
+      Roomba_Drive(400,1);
+      break;
+    case 'h': //slow rotate left on spot
+      Roomba_Drive(100,1);
+      break;
+    case 'i': //stop
+      Roomba_Drive(0,0);
+      break;
+    case 'j': //slow rotate right on spot
+      Roomba_Drive(100, -1);
+      break;
+    case 'k': //fast rotate right on spot
+      Roomba_Drive(400, -1);
+      break;
+    case 'l': //fast reverse left
+      Roomba_Drive(-400, 250);
+      break;
+    case 'm': //slow reverse left
+      Roomba_Drive(-100, 250);
+      break;
+    case 'n': //slow reverse
+      Roomba_Drive(-100, 32768);
+      break;
+    case 'o': //fast reverse
+      Roomba_Drive(-400, 32768);
+      break;
+    case 'p': //slow reverse right
+      Roomba_Drive(-100,-250);
+      break;
+    case 'q': //fast reverse right
+      Roomba_Drive(-400,-250);
+      break;
 
-void tiltUp() {
-	int foo=0; while(foo>0){
-		servo_pen_up();
-		foo--;
-	}
-}
-
-void panLeft() {
-	tiltPos-=2;
-	servo_set(tiltPos);
-}
-
-void tiltDown() {
-  int foo=0; while(foo>0){
-		servo_pen_down();
-		foo--;
-	}
-}
-
-void panRight() {
-    tiltPos+=2;
-	servo_set(tiltPos);
-}
-
-void switchLaser() {
-	if(laserOn==1){
-		laserOn=0
-		toggle_LED_C7();
-	}else{
-		laserOn=1;
-		toggle_LED_C7();
-	}
-}
-
-void servo(){
-	servo_init();
-	init_LED_C7();
-	while(1){
-		int command = UART_Recieve1();
-		switch(command){
-			case: 'U': //tilt up
-			tiltUp();
-			break;
-			case: 'D': //tilt down
-			tiltDown();
-			break;
-			case: 'L': //pan left
-			panLeft();
-			break;
-			case: 'R': //pan right
-			panRight();
-			break;
-			case: 'Z':
-			switchLaser();
-			break;
-		}
-		toggle_LED_C7();
-		Task_Next();
-	}
+    //Laser //TODO
+    /* case 'U': */
+    /*   tiltUp = true; */
+    /*   tiltDown = false; */
+    /*   break; */
+    /* case 'D': */
+    /*   tiltUp = false; */
+    /*   tiltDown = true; */
+    /*   break; */
+    /* case 'L': */
+    /*   panLeft = true; */
+    /*   panRight = false; */
+    /*   break; */
+    /* case 'R': */
+    /*   panLeft = false; */
+    /*   panRight = true; */
+    /*   break; */
+    /* case 'S': */
+    /*   tiltUp = false; */
+    /*   tiltDown = false; */
+    /*   panLeft = false; */
+    /*   panRight = false; */
+    /*   break; */
+    /* case 'Z': */
+    /*   laserOn = !laserOn; */
+    /*   break; */
+    }
+  }
+  Task_Next();
+  }
 }
 
 void a_main(void) {
 	UART_Init1(9600);
-	Task_Create_Period(0,25,10,6);
+	Roomba_Init();
+	Task_Create_Period(read_bt, 0, 7, 6, 0);
 }
-

@@ -16,8 +16,9 @@ void servo_init(){
 	DDRE |= (1<<PE5);  //PWM Pins as Out
 	DDRE |= (1<<PE4);  //PWM Pins as Out
 	//Using Timer 1
-	TIMSK3 &= ~(1<<OCIE3A);
+	//XXX?
 	TIMSK3 &= ~(1<<OCIE3B);
+	TIMSK3 &= ~(1<<OCIE3A);
 
 	//Set to Fast PWM mode 15
 	TCCR3A |= (1<<WGM30) | (1<<WGM31);
