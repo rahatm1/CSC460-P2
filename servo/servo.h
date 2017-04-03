@@ -32,7 +32,7 @@ void servo_init(){
 	OCR3A=5000;  //20 ms period
 }
 
-void servo_set(uint16_t pos) {
+void servo_set_pin3(uint16_t pos) {
 	if(pos < 135) {
 		pos = 135;
 	}
@@ -40,16 +40,25 @@ void servo_set(uint16_t pos) {
 		pos = 550;
 	}
     OCR3B = pos;
+}
+
+void servo_set_pin2(uint16_t pos) {
+	if(pos < 135) {
+		pos = 135;
+	}
+	if(pos > 550) {
+		pos = 550;
+	}
 	OCR3C = pos;
 }
 
 
 void servo_pen_down(){
-	servo_set(550L);
+	servo_set_pin3(550L);
 }
 
 void servo_pen_up(){
-	servo_set(340L);
+	servo_set_pin3(340L);
 }
 
 #endif /* SERVO_H_ */
