@@ -3,6 +3,9 @@
 #include <avr/interrupt.h>
 #include "common.h"
 #include "UART/BlockingUART.h"
+#include "LED/LED_Test.h"
+#define F_CPU 16000000
+#include <util/delay.h>
 /**
  * \file active.c
  * \brief A Skeleton Implementation of an RTOS
@@ -325,7 +328,10 @@ void OS_Abort(unsigned int error) {
 #ifdef DEBUG
     UART_print("\nOS Aborted: %d\n", error);
 #endif
-	for(;;) {}
+	for(;;) {
+		toggle_LED_B7();
+		_delay_ms(350);
+	}
 }
 
 CHAN Chan_Init() {

@@ -8,13 +8,17 @@
 #include "UART/BlockingUART.h"
 #include "sensor/joystick.h"
 #include  "Roomba/roomba.h"
+#include "servo/servo.h"
+
+char action = 'Q'; //unused;
+BOOL laserOn = FALSE;
 
 void read_bt() {
   for(;;){
   char command = UART_Receive1_Non_Blocking();
-  UART_Transmit0(command);
+  /* UART_Transmit0(command); */
+  UART_print("%c\n", command);
   if (command != -1) {
-	UART_Transmit0(command);
     switch (command)
     {
     //Roomba
@@ -71,39 +75,62 @@ void read_bt() {
       break;
 
     //Laser //TODO
-    /* case 'U': */
-    /*   tiltUp = true; */
-    /*   tiltDown = false; */
-    /*   break; */
-    /* case 'D': */
-    /*   tiltUp = false; */
-    /*   tiltDown = true; */
-    /*   break; */
-    /* case 'L': */
-    /*   panLeft = true; */
-    /*   panRight = false; */
-    /*   break; */
-    /* case 'R': */
-    /*   panLeft = false; */
-    /*   panRight = true; */
-    /*   break; */
-    /* case 'S': */
-    /*   tiltUp = false; */
-    /*   tiltDown = false; */
-    /*   panLeft = false; */
-    /*   panRight = false; */
-    /*   break; */
-    /* case 'Z': */
-    /*   laserOn = !laserOn; */
-    /*   break; */
+    case 'Z':
+	  toggle_LED_C7();
+      break;
+	default:
+	  action = command;
     }
   }
   Task_Next();
   }
 }
 
+void servo1(){
+	int i=475;
+	while(1){
+		if(action=='D'){
+			if((i+15)<550){
+				i+=15;
+				servo_set_pin2(i);
+			}
+			action='Q'; //non used charcter
+		}else if(action=='U'){
+			if((i-15)>250){
+				i-=15;
+				servo_set_pin2(i);
+			}
+			action='Q';
+		}
+		Task_Next();
+	}
+}
+
+void servo2(){
+	int i=475;
+	while(1){
+		if(action=='L'){
+			if((i+15)<550){
+				i+=15;
+				servo_set_pin3(i);
+			}
+		}else if(action=='R'){
+			if((i-15)>250){
+				i-=15;
+				servo_set_pin3(i);
+			}
+		}
+		action='Q';
+		Task_Next();
+	}
+}
+
 void a_main(void) {
 	UART_Init1(9600);
 	Roomba_Init();
-	Task_Create_Period(read_bt, 0, 7, 6, 0);
+	servo_init();
+	init_LED_C7();
+	Task_Create_Period(read_bt, 0, 3, 2, 0);
+	Task_Create_Period(servo1, 0, 3, 2, 1);
+	Task_Create_Period(servo2, 0, 3, 2, 2);
 }

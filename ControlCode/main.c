@@ -79,6 +79,7 @@ void drive(){
 			  } else if (x <= 639) {
 				if (stopped) {
 				  //do nothing
+				  UART_Transmit1('i');
 				} else {
 				  UART_Transmit1('i');
 				  stopped = TRUE;
