@@ -93,6 +93,7 @@ void Roomba_UpdateSensorPacket(ROOMBA_SENSOR_GROUP group, roomba_sensor_data_t* 
 		sensor_packet->capacity.bytes.low_byte = uart_get_byte(9);
 		break;
 	case LIGHT_BUMPERS:
+		while (uart_bytes_received() != 12);
 		sensor_packet->light_left.bytes.high_byte = uart_get_byte(0);
 		sensor_packet->light_left.bytes.low_byte = uart_get_byte(1);
 		sensor_packet->light_front_left.bytes.high_byte = uart_get_byte(2);
