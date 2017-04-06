@@ -37,7 +37,7 @@ extern void a_main();
   *===========
   */
 
-#define DEBUG 1
+/* #define DEBUG 1 */
 /* Prototype */
 void Task_Terminate(void);
 void setupTimer(void);
@@ -163,9 +163,9 @@ static void Dispatch()
         } else if (periodic_tasks.len > 0 && num_ticks >= peek(&periodic_tasks)->next_start) {
     		PD* p = peek(&periodic_tasks);
     		// Check for overlap with another periodic task
-    		if (p->next != NULL && num_ticks >= p->next->next_start) {
-    			OS_Abort(-2);
-    		}
+    		/* if (p->next != NULL && num_ticks >= p->next->next_start) { */
+    		/* 	OS_Abort(-2); */
+    		/* } */
 #ifdef DEBUG
         UART_print("periodic task dispatch\n");
 #endif
@@ -325,9 +325,7 @@ void OS_Abort(unsigned int error) {
 	//TODO: blink lights to indicate errors
 	Disable_Interrupt();
 
-#ifdef DEBUG
     UART_print("\nOS Aborted: %d\n", error);
-#endif
 	for(;;) {
 		toggle_LED_B7();
 		_delay_ms(350);
@@ -515,9 +513,9 @@ void idle_task() {
 void main()
 {
 
-#ifdef DEBUG
 	UART_Init0(57600);
 	UART_print("\nboot\n");
+#ifdef DEBUG
 #endif
 
    OS_Init();
